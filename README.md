@@ -14,3 +14,8 @@ pip install pyobjc-core
 pip install pyobjc  
 pip install pyautogui  
 ```
+
+firm update command.
+```
+sudo platformio run -t upload --upload-port /dev/cu.usbserial-DN02BC35
+```
