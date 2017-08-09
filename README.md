@@ -19,3 +19,4 @@ firm update command.
 ```
 sudo platformio run -t upload --upload-port /dev/cu.usbserial-DN02BC35
 ```
+pip install pyserial

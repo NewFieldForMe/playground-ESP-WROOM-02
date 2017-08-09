@@ -22,9 +22,32 @@ double GyroX;
 double GyroY;
 double GyroZ;
 
+double BaseAccelX;
+double BaseAccelY;
+double BaseAccelZ;
+
 void initializeMPU6050(){
   Wire.begin();
   writeMPU6050(PWR_MGMT_1, 0);
+  delay(1000);
+  caribration();
+}
+
+void caribration(){
+  int i;
+  BaseAccelX = 0.0;
+  BaseAccelY = 0.0;
+  BaseAccelZ = 0.0;
+  for(i = 0; i < 20; i++){
+    readSensorData();
+    BaseAccelX += AccelX;
+    BaseAccelY += AccelY;
+    BaseAccelZ += AccelZ;
+    delay(100);
+  }
+  BaseAccelX /= 20.0;
+  BaseAccelY /= 20.0;
+  BaseAccelZ /= 20.0;
 }
 
 void writeMPU6050(byte addr, byte data) {
@@ -72,6 +95,11 @@ void printSensorData() {
   Serial.print("Gyro X:" + String(GyroX));
   Serial.print(" Y:" + String(GyroY));
   Serial.println(" Z:" + String(GyroZ));
+  Serial.println("-----END-----");
+}
+
+void sendSensorDataForMovingMouse() {
+  Serial.println("Accel:" + String(AccelX - BaseAccelX) + ":" + String(AccelY - BaseAccelY) + ":dummy");
 }
 
 bool decideLED() {
