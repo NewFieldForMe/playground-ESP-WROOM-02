@@ -14,12 +14,15 @@ void setup() {
 
 void loop() {
   readSensorData();
-  // printSensorData();
-  // if (decideLED() > 0.5) {
-  //   digitalWrite(LED_PIN, HIGH);
-  // } else {
-  //   digitalWrite(LED_PIN, LOW);
-  // }
-  sendSensorDataForMovingMouse();
+  calcRotation();
+  // printRawSensorData();
+  // printCalcSensorData();
+  printAngle();
+  if (decideLED() > 0.5) {
+    digitalWrite(LED_PIN, HIGH);
+  } else {
+    digitalWrite(LED_PIN, LOW);
+  }
+  // sendSensorDataForMovingMouse();
   delay(200);
 }

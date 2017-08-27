@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <math.h>
 #define DEVICE_ADDR 0x68  // Device Address
 #define ACCEL_XOUT  0x3b
 #define ACCEL_YOUT  0x3d
@@ -15,39 +16,57 @@
 #define MPU6050_GYRO_CONFIG  0x1b
 #define MPU6050_ACCEL_CONFIG 0x1c
 
-double AccelX;
-double AccelY;
-double AccelZ;
-double GyroX;
-double GyroY;
-double GyroZ;
+float angleX, angleY, angleZ;
+
+double RawAccelX;
+double RawAccelY;
+double RawAccelZ;
+double RawGyroX;
+double RawGyroY;
+double RawGyroZ;
+
+double CalcAccelX;
+double CalcAccelY;
+double CalcAccelZ;
+double CalcGyroX;
+double CalcGyroY;
+double CalcGyroZ;
 
 double BaseAccelX;
 double BaseAccelY;
 double BaseAccelZ;
+double BaseGyroX;
+double BaseGyroY;
+double BaseGyroZ;
 
 void initializeMPU6050(){
   Wire.begin();
   writeMPU6050(PWR_MGMT_1, 0);
   delay(1000);
-  caribration();
+  caribrationMPU6050();
 }
 
-void caribration(){
+void caribrationMPU6050(){
   int i;
   BaseAccelX = 0.0;
   BaseAccelY = 0.0;
   BaseAccelZ = 0.0;
-  for(i = 0; i < 20; i++){
+  for(i = 0; i < 3000; i++){
     readSensorData();
-    BaseAccelX += AccelX;
-    BaseAccelY += AccelY;
-    BaseAccelZ += AccelZ;
-    delay(100);
+    BaseAccelX += RawAccelX;
+    BaseAccelY += RawAccelY;
+    BaseAccelZ += RawAccelZ;
+    BaseGyroX += RawGyroX;
+    BaseGyroY += RawGyroY;
+    BaseGyroZ += RawGyroZ;
+    delay(1);
   }
-  BaseAccelX /= 20.0;
-  BaseAccelY /= 20.0;
-  BaseAccelZ /= 20.0;
+  BaseAccelX /= 3000.0;
+  BaseAccelY /= 3000.0;
+  BaseAccelZ /= 3000.0;
+  BaseGyroX /= 3000.0;
+  BaseGyroY /= 3000.0;
+  BaseGyroZ /= 3000.0;
 }
 
 void writeMPU6050(byte addr, byte data) {
@@ -72,38 +91,88 @@ int16_t readWordMPU6050(byte addr) {
   high = readByteMPU6050(addr);
   low = readByteMPU6050(low);
   ret = (high << 8) + low;
-  if (ret >= 0x8000) {
-    ret = -((65535 - ret) + 1);
-  }
+  // if (ret >= 0x8000) {
+  //   ret = -((65535 - ret) + 1);
+  // }
   return ret;
 }
 
 void readSensorData() {
-  AccelX = readWordMPU6050(ACCEL_XOUT) / 16384.0;
-  AccelY = readWordMPU6050(ACCEL_YOUT) / 16384.0;
-  AccelZ = readWordMPU6050(ACCEL_ZOUT) / 16384.0;
-  GyroX = readWordMPU6050(GYRO_XOUT) / 131.0;
-  GyroY = readWordMPU6050(GYRO_YOUT) / 131.0;
-  GyroZ = readWordMPU6050(GYRO_ZOUT) / 131.0;
+  RawAccelX = readWordMPU6050(ACCEL_XOUT) / 16384.0;
+  RawAccelY = readWordMPU6050(ACCEL_YOUT) / 16384.0;
+  RawAccelZ = readWordMPU6050(ACCEL_ZOUT) / 16384.0;
+  RawGyroX = readWordMPU6050(GYRO_XOUT) / 131.0;
+  RawGyroY = readWordMPU6050(GYRO_YOUT) / 131.0;
+  RawGyroZ = readWordMPU6050(GYRO_ZOUT) / 131.0;
 }
 
-void printSensorData() {
+void printRawSensorData() {
   Serial.println("--------------");
-  Serial.print("Accel X:" + String(AccelX));
-  Serial.print(" Y:" + String(AccelY));
-  Serial.println(" Z:" + String(AccelZ));
-  Serial.print("Gyro X:" + String(GyroX));
-  Serial.print(" Y:" + String(GyroY));
-  Serial.println(" Z:" + String(GyroZ));
+  Serial.print("Raw Accel X:" + String(RawAccelX));
+  Serial.print(" Y:" + String(RawAccelY));
+  Serial.println(" Z:" + String(RawAccelZ));
+  Serial.print("Raw Gyro X:" + String(RawGyroX));
+  Serial.print(" Y:" + String(RawGyroY));
+  Serial.println(" Z:" + String(RawGyroZ));
   Serial.println("-----END-----");
 }
 
+void printCalcSensorData() {
+  Serial.println("--------------");
+  Serial.print("Calc Accel X:" + String(CalcAccelX));
+  Serial.print(" Y:" + String(CalcAccelY));
+  Serial.println(" Z:" + String(CalcAccelZ));
+  Serial.print("Calc Gyro X:" + String(CalcGyroX));
+  Serial.print(" Y:" + String(CalcGyroY));
+  Serial.println(" Z:" + String(CalcGyroZ));
+  Serial.println("-----END-----");
+}
+
+void printAngle() {
+  Serial.print("Angle X:" + String(angleX));
+  Serial.print(" Y:" + String(angleY));
+  Serial.println(" Z:" + String(angleZ));
+}
+
 void sendSensorDataForMovingMouse() {
-  Serial.println("Accel:" + String(AccelX - BaseAccelX) + ":" + String(AccelY - BaseAccelY) + ":dummy");
+  // Serial.println("Accel:" + String(AccelX - BaseAccelX) + ":" + String(AccelY - BaseAccelY) + ":dummy");
+}
+
+float acc_x, acc_y, acc_z, acc_angle_x, acc_angle_y, acc_angle_z;
+float preInterval, interval;
+double gyro_angle_x = 0, gyro_angle_y = 0, gyro_angle_z = 0;
+void calcRotation() {
+  float acc_angle_x, acc_angle_y;
+  CalcAccelX = RawAccelX - BaseAccelX;
+  CalcAccelY = RawAccelY - BaseAccelY;
+  CalcAccelZ = RawAccelZ - BaseAccelZ;
+  CalcGyroX = RawGyroX - BaseGyroX;
+  CalcGyroY = RawGyroY - BaseGyroY;
+  CalcGyroZ = RawGyroZ - BaseGyroZ;
+  
+  acc_angle_x = atan2(RawAccelX, RawAccelZ + abs(RawAccelY)) * 360.0 / 2.0 / PI;
+  acc_angle_y = atan2(RawAccelY, RawAccelZ + abs(RawAccelX)) * 360.0 / 2.0  / PI;
+  acc_angle_z = atan2(RawAccelZ, abs(RawAccelY) + abs(RawAccelX)) * 360.0 / 2.0  / PI;
+
+  interval = millis() - preInterval;
+  preInterval = millis();
+
+  gyro_angle_x += CalcGyroX * (interval * 0.001);
+  gyro_angle_y += CalcGyroY * (interval * 0.001);
+  gyro_angle_z += CalcGyroZ * (interval * 0.001);
+
+  // filter
+  angleX = (0.2 * gyro_angle_x) + (0.8 * acc_angle_x);
+  angleY = (0.2 * gyro_angle_y) + (0.8 * acc_angle_y);
+  angleZ = (0.2 * gyro_angle_z) + (0.8 * acc_angle_z);
+
+  gyro_angle_x = angleX;
+  gyro_angle_y = angleY;
+  gyro_angle_z = angleZ;
 }
 
 bool decideLED() {
-    if (AccelX > 0.5 ){
+    if (RawAccelX > 0.5 ){
         return true;
     }
     return false;
