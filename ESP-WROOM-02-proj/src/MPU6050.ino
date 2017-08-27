@@ -134,6 +134,12 @@ void printAngle() {
   Serial.println(" Z:" + String(angleZ));
 }
 
+String stringAngle() {
+  String ret;
+  ret = "X:" + String(angleX) + "\nY:" + String(angleY) + "\nZ:" + String(angleZ);
+  return ret;
+}
+
 void sendSensorDataForMovingMouse() {
   // Serial.println("Accel:" + String(AccelX - BaseAccelX) + ":" + String(AccelY - BaseAccelY) + ":dummy");
 }
