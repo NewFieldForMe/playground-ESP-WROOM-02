@@ -4,6 +4,7 @@
 #include <FS.h>
 #include "module/ESP8266-wifi.h"
 #include "module/ESP8266-ST7735.h"
+#include "module/MPU6050.h"
 
 int8_t neko;
 
@@ -12,6 +13,7 @@ char ssid[] = "";
 char password[] = "";
 
 ESP8266_ST7735* _ST7735;
+MPU6050* _MPU6050;
 
 void setup() {
   Serial.begin(9600);
@@ -27,11 +29,16 @@ void setup() {
   // initializeMPU6050();
   _ST7735 = new ESP8266_ST7735();
   _ST7735->setup();
+
+  _MPU6050 = new MPU6050();
+  _MPU6050->setup();
+
   neko = 1;
 }
 
 void loop() {
   _wifi->loop();
+  _MPU6050->loop();
   // readSensorData();
   // calcRotation();
   // printRawSensorData();
@@ -51,7 +58,8 @@ void loop() {
   
   // ------
   String filename;
-  if (neko == true) {
+  // if (neko == true) {
+  if (_MPU6050->decideLED()){
     filename = "/mya.bmp";
   } else {
     filename = "/innu.bmp";
@@ -59,5 +67,5 @@ void loop() {
   _ST7735->bmpDraw(filename, 0, 0);
   neko = !neko;
 
-  delay(10000);
+  delay(1000);
 }

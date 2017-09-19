@@ -1,1 +1,1 @@
-sudo platformio run -v -t uploadfs --upload-port $1
+sudo platformio run -t uploadfs --upload-port $1
