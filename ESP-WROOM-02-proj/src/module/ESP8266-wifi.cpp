@@ -1,14 +1,16 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
+#include "ESP8266-wifi.h"
 
-const char* ssid = "...";
-const char* password = "...";
+/*  constructor
+ *
+ */
+ESP8266_Wifi::ESP8266_Wifi(char* ssid, char* password) {
+  _ssid = ssid;
+  _password = password;
+}
 
-void WifiInit() {
+void ESP8266_Wifi::setup() {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(_ssid, _password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
     delay(5000);
@@ -44,7 +46,12 @@ void WifiInit() {
   ArduinoOTA.begin();
 }
 
-void printIPAddress() {
+void ESP8266_Wifi::loop() {
+  ArduinoOTA.handle();
+  printIPAddress();
+}
+
+void ESP8266_Wifi::printIPAddress() {
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());

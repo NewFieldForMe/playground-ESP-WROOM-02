@@ -3,7 +3,7 @@
 #include <Adafruit_ST7735.h> // Hardware-specific library
 #include <SPI.h>
 #include <FS.h>
-#include <ArduinoOTA.h>
+#include "module/ESP8266-wifi.h"
 #define LED_PIN 13
 
 #define TFT_CS     15
@@ -13,25 +13,30 @@
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 int8_t neko;
 
+ESP8266_Wifi* wifi;
+char* ssid = "";
+char* password = "";
+
 void setup() {
-  // pinMode(LED_PIN, OUTPUT);
-  // initializeMPU6050();
-  tft.initR(INITR_BLACKTAB);   // initialize a ST7735S chip, black tab
   Serial.begin(9600);
+  Serial.println("Wake Up!!");
   while(!Serial){
     // wait for serial port to connect
     ;
   }
-  Serial.println("Wake Up!!");
+  // wifi start
+  wifi = new ESP8266_Wifi(ssid, password);
+  wifi->setup();
+  // pinMode(LED_PIN, OUTPUT);
+  // initializeMPU6050();
+  tft.initR(INITR_BLACKTAB);   // initialize a ST7735S chip, black tab
   tft.fillScreen(ST7735_BLACK);
   neko = 1;
   SPIFFS.begin();
-  WifiInit();
 }
 
 void loop() {
-  ArduinoOTA.handle();
-  printIPAddress();
+  wifi->loop();
   // readSensorData();
   // calcRotation();
   // printRawSensorData();
