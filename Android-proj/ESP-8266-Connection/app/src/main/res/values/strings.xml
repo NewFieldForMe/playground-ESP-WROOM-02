@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ESP-8266-Connection</string>
+    <string name="screenChange_cat_button">neko</string>
+    <string name="screenChange_dog_button">inu</string>
+</resources>

@@ -1,5 +1,6 @@
 #include "ESP8266-wifi.h"
 
+WiFiServer server(TCP_PORT);
 /*  constructor
  *
  */
@@ -16,7 +17,6 @@ void ESP8266_Wifi::setup() {
     delay(5000);
     ESP.restart();
   }
-
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
 
@@ -44,11 +44,28 @@ void ESP8266_Wifi::setup() {
     else if (error == OTA_END_ERROR) Serial.println("End Failed");
   });
   ArduinoOTA.begin();
+  server.begin();
 }
 
 void ESP8266_Wifi::loop() {
   ArduinoOTA.handle();
   printIPAddress();
+}
+
+String ESP8266_Wifi::ReadData() {
+  WiFiClient client = server.available();
+  if (!client.available()) { return ""; }
+  if (SPIFFS.exists("/temp.bmp")) {
+    SPIFFS.remove("/temp.bmp");
+  }
+  String line = "";
+  while(client.available()){
+    line += client.readStringUntil('\r');
+    Serial.println(line);
+  }
+  client.flush();
+  client.stop();
+  return line;
 }
 
 void ESP8266_Wifi::printIPAddress() {

@@ -25,6 +25,7 @@ void setup() {
   // wifi start
   _wifi = new ESP8266_Wifi(ssid, password);
   _wifi->setup();
+
   // ST7735 start
   // _ST7735 = new ESP8266_ST7735();
   // _ST7735->setup();
@@ -40,13 +41,19 @@ void loop() {
   _wifi->loop();
   // _MPU6050->loop();
 
-  String filename;
+  String recv = _wifi->ReadData();
+  String filename = "";
+  if (recv == "Neko!!") {
+    filename = "/mya.bmp";
+  } else if(recv == "Inu!!") {
+    filename = "/innu.bmp";
+  }
   // if (_MPU6050->decideLED()){
   //   filename = "/mya.bmp";
   // } else {
   //   filename = "/innu.bmp";
   // }
-  filename = "/mya.bmp";
+  // filename = "/temp.bmp";
   _ILI9341->bmpDraw(filename, 0, 0);
 
   delay(1000);

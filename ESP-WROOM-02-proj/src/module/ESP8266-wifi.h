@@ -5,6 +5,9 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <FS.h>
+
+#define TCP_PORT 8090
 
 class ESP8266_Wifi {
 public:
@@ -12,6 +15,7 @@ public:
   void setup();
   void loop();
   void printIPAddress();
+  String ReadData();
 private:
   char* _ssid;
   char* _password;
